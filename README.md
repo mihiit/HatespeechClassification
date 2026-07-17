@@ -23,13 +23,20 @@ paper are hand-computed or estimated outside this pipeline.
 
 ```
 .
-├── prep_data.py            # Builds train/val/test splits + rationale masks
-├── train_logreg.py          # Trains TF-IDF + Logistic Regression baseline
-├── train_bilstm.py          # Trains BiLSTM with additive attention
-├── faithfulness_eval.py     # Extracts attention/LIME/SHAP explanations, scores IOU/AUPRC
-├── significance_test.py     # Paired t-tests for Table 3 (LogReg vs BiLSTM faithfulness)
-├── faithfulness_results.json    # Saved output: mean/SD faithfulness scores (Table 1)
-├── faithfulness_raw_scores.json # Saved output: per-post scores used for significance testing
+├── prep_data.py                    # Builds train/val/test splits + rationale masks
+├── train_logreg.py                 # Trains TF-IDF + Logistic Regression baseline
+├── train_bilstm.py                 # Trains BiLSTM (h=64) with additive attention
+├── faithfulness_eval.py            # Extracts attention/LIME/SHAP explanations, scores IOU/AUPRC (Table 1)
+├── significance_test.py            # Paired t-tests for Table 3 (LogReg vs BiLSTM faithfulness)
+├── scale_sweep_train.py            # Trains BiLSTM at hidden sizes {32,64,128,256} (Table 4 accuracy)
+├── scale_faithfulness_eval.py      # Attention/LIME faithfulness across the 4 sizes (Table 4, Fig. 3)
+├── make_architecture_fig.py        # Generates Figure 1 (pipeline diagram), 300 DPI
+├── make_figures.py                 # Generates Figures 2-3 (results bar chart, scaling trend), 300 DPI
+├── figures/                        # Output figures (300 DPI PNG)
+├── faithfulness_results.json       # Saved output: mean/SD faithfulness scores (Table 1)
+├── faithfulness_raw_scores.json    # Saved output: per-post scores used for significance testing
+├── scale_sweep_results.json        # Saved output: accuracy/params per BiLSTM hidden size
+├── scale_faithfulness_results.json # Saved output: faithfulness per BiLSTM hidden size
 ├── requirements.txt
 └── README.md
 ```
@@ -79,6 +86,20 @@ python3 faithfulness_eval.py
 # 5. Run paired significance tests (LogReg vs BiLSTM, per explanation method)
 python3 significance_test.py
 #   Reproduces Table 3 (paired t-tests on IOU/AUPRC)
+
+# 6. Train BiLSTM at 4 hidden sizes (32, 64, 128, 256) to test scaling
+python3 scale_sweep_train.py
+#   -> writes bilstm_h{32,64,128,256}.pt, scale_sweep_results.json
+#   Reproduces the accuracy/params columns of Table 4
+
+# 7. Evaluate attention + LIME faithfulness across the 4 sizes
+python3 scale_faithfulness_eval.py
+#   -> writes scale_faithfulness_results.json
+#   Reproduces the faithfulness columns of Table 4 and Figure 3
+
+# 8. Generate figures (300 DPI)
+python3 make_architecture_fig.py   # -> figures/fig1_architecture.png
+python3 make_figures.py            # -> figures/fig2_main_results.png, fig3_scaling_trend.png
 ```
 
 Model size and inference latency figures (Table 2) can be reproduced by loading
@@ -92,14 +113,20 @@ brevity, since it is not required to reproduce the accuracy or faithfulness numb
 |---|---|---|---|
 | TF-IDF + LogReg | LIME | 0.586 | 0.737 |
 | TF-IDF + LogReg | SHAP | 0.620 | 0.746 |
-| BiLSTM | Attention | 0.582 | 0.723 |
-| BiLSTM | LIME | 0.560 | 0.715 |
-| BiLSTM | SHAP | 0.525 | 0.687 |
+| BiLSTM (h=64) | Attention | 0.582 | 0.723 |
+| BiLSTM (h=64) | LIME | 0.560 | 0.715 |
+| BiLSTM (h=64) | SHAP | 0.525 | 0.687 |
 
 The smaller, faster logistic regression model is at least as faithful as the
 larger BiLSTM across every explanation method tested, and significantly more
 faithful under SHAP (paired t-test, p = 0.0006 for IOU, p = 0.0034 for AUPRC).
-See the paper for full discussion and caveats.
+
+**Scaling experiment:** across BiLSTM hidden sizes {32, 64, 128, 256}, neither
+accuracy nor faithfulness increases monotonically with capacity — faithfulness
+peaks at h=64 and the largest model (h=256, 1.93M params) is worse than smaller
+variants on every metric. See Table 4 / Figure 3 in the paper.
+
+See the paper for full discussion, the theoretical analysis (Section 6), and caveats.
 
 ## Data
 
