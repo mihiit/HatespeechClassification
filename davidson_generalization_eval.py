@@ -4,6 +4,14 @@ Generalization check: evaluates the three HateXplain-trained models
 hate speech / offensive language dataset, without any retraining.
 No rationale annotations exist in Davidson, so this checks classification
 generalization only, not faithfulness.
+
+NOTE ON CHECKPOINTS: this script loads "bilstm_h64.pt", which is produced by
+scale_sweep_train.py (Section 7.3's scaling experiment), not "bilstm_model.pt"
+from train_bilstm.py (Section 7.1's main comparison). Both are trained with the
+same hyperparameters and seed and should perform near-identically, but are not
+guaranteed to be bit-identical due to DataLoader shuffle-order differences
+between the two scripts. Run scale_sweep_train.py before this script (see
+README step ordering) so bilstm_h64.pt exists.
 """
 import json
 import re

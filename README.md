@@ -36,6 +36,10 @@ reported as directly produced by these scripts, not adjusted or omitted.
 ├── faithfulness_eval.py               # Attention/LIME/SHAP faithfulness for LogReg + BiLSTM (Table 1 rows 1-5)
 ├── transformer_faithfulness_eval.py   # CLS-Attention/LIME/SHAP faithfulness for Transformer (Table 1 rows 6-8)
 ├── significance_test.py               # Paired t-tests, LogReg vs BiLSTM (Table 3 rows 1-2)
+├── significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (Table 3 rows 3-5)
+├── bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs for all Table 3 comparisons (Table 3b)
+├── shap_convergence.py                # KernelSHAP coalition-budget convergence check, m in {50,100,200,400} (Table showing convergence, Sec. 7.5)
+├── seed_stability.py                  # Attention-explanation stability across 3 random seeds (Table showing stability, Sec. 7.6)
 ├── measure_energy.py                  # CodeCarbon training/inference energy measurement (Table 4)
 ├── scale_sweep_train.py               # Trains BiLSTM at hidden sizes {32,64,128,256} (Table 5 accuracy)
 ├── scale_faithfulness_eval.py         # Attention/LIME faithfulness across the 4 sizes + raw per-post scores (Table 5, Fig. 3)
@@ -90,10 +94,9 @@ python3 faithfulness_eval.py             # LogReg + BiLSTM: attention/LIME/SHAP 
 python3 transformer_faithfulness_eval.py # Transformer: CLS-attention/LIME/SHAP vs. human rationales
 
 # 4. Significance testing (Table 3)
-python3 significance_test.py         # Paired t-tests, LogReg vs BiLSTM (LIME, SHAP)
-#   Cross-model tests involving the Transformer (also in Table 3) use the same
-#   pattern applied to transformer_faithfulness_raw.json; see the paper's Section 7.1
-#   for the exact pairs tested.
+python3 significance_test.py               # Paired t-tests, LogReg vs BiLSTM (LIME, SHAP)
+python3 significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (all Table 3 rows)
+python3 bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs (Table 3b), corroborates t-tests
 
 # 5. Energy measurement (Table 4, Figure 4)
 python3 measure_energy.py            # CodeCarbon: real training/inference CO2eq for LogReg + BiLSTM
@@ -107,8 +110,15 @@ python3 scale_faithfulness_eval.py   # Attention/LIME faithfulness per size + ra
 
 # 7. Cross-dataset generalization check (Table 7, Figure 5)
 python3 davidson_generalization_eval.py   # Zero-shot LogReg/BiLSTM/Transformer on Davidson et al.
+#   Requires bilstm_h64.pt from step 6 above (see comment at top of this script)
 
-# 8. Generate all figures (300 DPI)
+# 8. KernelSHAP coalition-budget convergence check (Sec. 7.5)
+python3 shap_convergence.py          # -> shap_convergence_results.json; requires bilstm_h64.pt from step 6
+
+# 9. Explanation stability across random seeds (Sec. 7.6)
+python3 seed_stability.py            # Trains 2 additional BiLSTM seeds internally; -> seed_stability_results.json
+
+# 10. Generate all figures (300 DPI)
 python3 make_architecture_fig.py     # -> figures/fig1_architecture.png
 python3 make_figures.py              # -> figures/fig2-5_*.png
 ```
@@ -131,6 +141,16 @@ as suggestive, not confirmed.
 **Cross-dataset generalization (Davidson et al., zero-shot):** all three models
 underperform the 0.832 majority-class baseline (LogReg 0.621, BiLSTM 0.572,
 Transformer 0.498 accuracy) - a genuine limitation, reported plainly.
+
+**KernelSHAP convergence:** BiLSTM SHAP faithfulness stays in a narrow band
+(IOU 0.53-0.57) across an 8x increase in coalition samples (50->400) - the
+SHAP faithfulness gap vs. LogReg is not primarily an under-sampling artifact.
+
+**Explanation stability across seeds:** three BiLSTM (h=64) retrains at different
+seeds achieve near-identical accuracy (0.727-0.729) but their attention explanations
+agree with each other far less (mean pairwise IOU 0.33-0.41) than any single run
+agrees with human rationales (0.582) - a genuine, concerning instability, reported
+plainly rather than downplayed.
 
 See the paper for full discussion, the theoretical analysis of SHAP faithfulness
 (Section 6), and a complete list of limitations (Section 9).
