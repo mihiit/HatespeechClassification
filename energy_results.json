@@ -1,0 +1,23 @@
+{
+  "logreg_train": {
+    "wall_time_s": 0.9097877740859985,
+    "emissions_kg_co2": 9.39710279181637e-09,
+    "n_repeats": 10
+  },
+  "logreg_infer_1000samples": {
+    "wall_time_s": 0.00012774944305419923,
+    "emissions_kg_co2": 2.292560199801368e-10,
+    "n_repeats": 50,
+    "n_samples": 1000
+  },
+  "bilstm_train": {
+    "wall_time_s": 47.68127679824829,
+    "emissions_kg_co2": 3.845747546885757e-07
+  },
+  "bilstm_infer_1000samples": {
+    "wall_time_s": 0.107174813747406,
+    "emissions_kg_co2": 2.1888291336405917e-09,
+    "n_repeats": 20,
+    "n_samples": 1000
+  }
+}

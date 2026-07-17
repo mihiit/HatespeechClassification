@@ -6,3 +6,5 @@ shap
 lime
 matplotlib
 pillow
+pandas
+codecarbon

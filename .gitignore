@@ -1,8 +1,13 @@
 HateXplain/
+davidson/
 splits.json
 logreg_model.pkl
 bilstm_model.pt
+bilstm_h*.pt
+transformer_model.pt
+transformer_vocab.pkl
 vocab.pkl
+h256_result.json
 __pycache__/
 *.pyc
 .DS_Store
