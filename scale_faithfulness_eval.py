@@ -1,3 +1,11 @@
+"""
+Attention/LIME faithfulness evaluation across four BiLSTM widths (Table 5,
+Figure 3). Also saves per-post raw IOU arrays (raw_attn_iou / raw_lime_iou)
+needed by scale_significance_test.py to compute Table 6's ANOVA and pairwise
+t-tests -- these raw arrays were previously discarded after computing the
+mean, which meant Table 6 could not actually be reproduced from committed
+repo artifacts. Fixed so a fresh run now persists everything Table 6 needs.
+"""
 import json
 import numpy as np
 import torch
@@ -116,7 +124,9 @@ for hd in [32, 64, 128, 256]:
     scale_results[hd] = {
         "attn_iou": float(np.mean(attn_ious)), "attn_auprc": float(np.mean(attn_auprcs)),
         "lime_iou": float(np.mean(lime_ious)), "lime_auprc": float(np.mean(lime_auprcs)),
-        "n": len(attn_ious)
+        "n": len(attn_ious),
+        "raw_attn_iou": [float(v) for v in attn_ious],
+        "raw_lime_iou": [float(v) for v in lime_ious],
     }
     print(f"hidden_dim={hd}: attn_IOU={np.mean(attn_ious):.4f} lime_IOU={np.mean(lime_ious):.4f}")
 

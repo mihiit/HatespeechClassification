@@ -28,6 +28,41 @@ involved.** No results in the paper are hand-computed or estimated outside this
 pipeline. Unflattering results (e.g. weak cross-dataset generalization) are
 reported as directly produced by these scripts, not adjusted or omitted.
 
+### Known issues (found and fixed 2026-07-18)
+
+An independent check against this repo's own committed outputs found two real
+bugs, now fixed:
+
+1. **Table 1's SD column was wrong.** The paper's Table 1 reported IOU/AUPRC
+   standard deviations of roughly 0.18-0.30, but recomputing directly from
+   `faithfulness_results.json` / `transformer_faithfulness_results.json` (the
+   actual output of `faithfulness_eval.py` / `transformer_faithfulness_eval.py`)
+   gives SDs of roughly 0.26-0.39 for every row. The means all matched exactly;
+   only the SDs were wrong. **This has been corrected in the paper** (Table 1
+   SDs, 95% CIs, and the Table 3 Cohen's d column were all recomputed from the
+   correct values). Table 3's p-values and bootstrap CIs were independently
+   re-run against `faithfulness_raw_scores.json` / `transformer_faithfulness_raw.json`
+   and matched the paper exactly, so that table was never affected.
+2. **Table 6 (the scaling-experiment ANOVA/pairwise t-tests) could not be
+   reproduced from committed repo artifacts.** `scale_faithfulness_eval.py`
+   computed the per-post IOU arrays needed for these tests but only ever saved
+   their mean to `scale_faithfulness_results.json`, discarding the raw values.
+   No script in the repo ever computed the ANOVA either — the README simply
+   described the calculation in prose. Both are now fixed:
+   `scale_faithfulness_eval.py` saves `raw_attn_iou` / `raw_lime_iou`, and the
+   new `scale_significance_test.py` computes Table 6 from them. **This does
+   require re-running `scale_faithfulness_eval.py`** against the trained
+   `bilstm_h{32,64,128,256}.pt` checkpoints — the raw arrays were never saved
+   by any prior run, so they can't be recovered from what's currently
+   committed. `scale_significance_test.py` will tell you this and exit
+   cleanly if you try to run it before that.
+
+Everything else — Table 3/3b (significance tests, bootstrap CIs), Table 4
+(energy), Table 5 (scaling means), Table 7 (Davidson generalization), the
+KernelSHAP convergence check, and the seed-stability check — was independently
+re-run against this repo's own committed JSON outputs and matched the paper
+exactly.
+
 ## Repository structure
 
 ```
@@ -41,12 +76,14 @@ reported as directly produced by these scripts, not adjusted or omitted.
 ├── transformer_faithfulness_eval.py   # CLS-Attention/LIME/SHAP faithfulness for Transformer (Table 1 rows 6-8)
 ├── significance_test.py               # Paired t-tests, LogReg vs BiLSTM (Table 3 rows 1-2)
 ├── significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (Table 3 rows 3-5)
+├── effect_sizes.py                    # Paired Cohen's d for all Table 3 comparisons (Table 3 last column)
 ├── bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs for all Table 3 comparisons (Table 3b)
 ├── shap_convergence.py                # KernelSHAP coalition-budget convergence check, m in {50,100,200,400} (Table showing convergence, Sec. 7.5)
 ├── seed_stability.py                  # Attention-explanation stability across 3 random seeds (Table showing stability, Sec. 7.6)
 ├── measure_energy.py                  # CodeCarbon training/inference energy measurement (Table 4)
 ├── scale_sweep_train.py               # Trains BiLSTM at hidden sizes {32,64,128,256} (Table 5 accuracy)
 ├── scale_faithfulness_eval.py         # Attention/LIME faithfulness across the 4 sizes + raw per-post scores (Table 5, Fig. 3)
+├── scale_significance_test.py         # ANOVA + pairwise t-tests across the 4 sizes (Table 6) -- needs a fresh scale_faithfulness_eval.py run, see Known Issues
 ├── davidson_generalization_eval.py    # Zero-shot evaluation on Davidson et al. corpus (Table 7)
 ├── make_architecture_fig.py           # Generates Figure 1 (3-pipeline diagram), 300 DPI
 ├── make_figures.py                    # Generates Figures 2, 3, 4, 5, 300 DPI
@@ -54,6 +91,7 @@ reported as directly produced by these scripts, not adjusted or omitted.
 ├── faithfulness_results.json / faithfulness_raw_scores.json
 ├── transformer_faithfulness_results.json / transformer_faithfulness_raw.json
 ├── scale_sweep_results.json / scale_faithfulness_results.json
+├── effect_sizes_results.json
 ├── energy_results.json
 ├── davidson_generalization_results.json
 ├── requirements.txt
@@ -100,6 +138,7 @@ python3 transformer_faithfulness_eval.py # Transformer: CLS-attention/LIME/SHAP 
 # 4. Significance testing (Table 3)
 python3 significance_test.py               # Paired t-tests, LogReg vs BiLSTM (LIME, SHAP)
 python3 significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (all Table 3 rows)
+python3 effect_sizes.py                    # Paired Cohen's d for all Table 3 comparisons -> effect_sizes_results.json
 python3 bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs (Table 3b), corroborates t-tests
 
 # 5. Energy measurement (Table 4, Figure 4)
@@ -108,9 +147,8 @@ python3 measure_energy.py            # CodeCarbon: real training/inference CO2eq
 # 6. Scaling experiment + significance (Table 5/6, Figure 3)
 python3 scale_sweep_train.py         # Trains BiLSTM at h in {32,64,128,256}
 python3 scale_faithfulness_eval.py   # Attention/LIME faithfulness per size + raw per-post scores
-#   ANOVA / pairwise t-tests (Table 6) are computed directly from
-#   scale_faithfulness_results.json's raw_attn_iou / raw_lime_iou arrays with
-#   scipy.stats.f_oneway / ttest_ind; see the paper's Section 7.3 for the exact snippet.
+python3 scale_significance_test.py   # ANOVA / pairwise t-tests (Table 6), reads raw_attn_iou/raw_lime_iou
+#   from scale_faithfulness_results.json saved by the step above.
 
 # 7. Cross-dataset generalization check (Table 7, Figure 5)
 python3 davidson_generalization_eval.py   # Zero-shot LogReg/BiLSTM/Transformer on Davidson et al.

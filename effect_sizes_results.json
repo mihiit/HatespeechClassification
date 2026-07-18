@@ -1,0 +1,37 @@
+{
+  "LogReg-LIME vs. BiLSTM-LIME": {
+    "mean_diff": 0.026175702975051323,
+    "d": 0.09770111225928946,
+    "magnitude": "negligible"
+  },
+  "LogReg-SHAP vs. BiLSTM-SHAP": {
+    "mean_diff": 0.09563335564390445,
+    "d": 0.28779460887197317,
+    "magnitude": "small"
+  },
+  "LogReg-LIME vs. Transformer-LIME": {
+    "mean_diff": 0.015081252128216078,
+    "d": 0.051126531782852,
+    "magnitude": "negligible"
+  },
+  "LogReg-SHAP vs. Transformer-SHAP": {
+    "mean_diff": 0.07919385636270047,
+    "d": 0.2591479597284442,
+    "magnitude": "small"
+  },
+  "BiLSTM-LIME vs. Transformer-LIME": {
+    "mean_diff": -0.011094450846835241,
+    "d": -0.03594522548073253,
+    "magnitude": "negligible"
+  },
+  "BiLSTM-SHAP vs. Transformer-SHAP": {
+    "mean_diff": -0.016439499281203956,
+    "d": -0.0591602797497984,
+    "magnitude": "negligible"
+  },
+  "BiLSTM-Attn vs. Transformer-CLS-Attn": {
+    "mean_diff": 0.11643835086044034,
+    "d": 0.29075182806103567,
+    "magnitude": "small"
+  }
+}
