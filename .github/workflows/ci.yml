@@ -18,7 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        # 3.10 dropped from this matrix: torch==2.13.0 (pinned in requirements.txt
+        # to match the actual measurement environment, see Setup below) does not
+        # ship Python 3.10 wheels, so `pip install -r requirements.txt` fails on
+        # 3.10 with no matching distribution -- not a bug in this repo's code,
+        # just a floor PyTorch itself raised. 3.11 matches the documented tested
+        # environment; 3.12 is added as a forward-compatibility check.
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 

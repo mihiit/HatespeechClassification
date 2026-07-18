@@ -1,6 +1,6 @@
 # The Faithfulness Paradox: When a Simple Classifier Out-Explains Neural Networks in Hate Speech Detection
 
-[![CI](https://github.com/mihiit/hate-speechclassification/actions/workflows/ci.yml/badge.svg)](https://github.com/mihiit/hate-speechclassification/actions/workflows/ci.yml)
+[![CI](https://github.com/mihiit/HatespeechClassification/actions/workflows/ci.yml/badge.svg)](https://github.com/mihiit/HatespeechClassification/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
@@ -109,6 +109,20 @@ Two extensions were added and verified for real, not just written:
   above 0.75 for all three both times), with the human rationale and every
   applicable explanation method for every model shown side by side.
 
+### CI fix (2026-07-19)
+
+The first CI run after pushing to GitHub failed on the Python 3.10 job. Cause:
+`requirements.txt` pins `torch==2.13.0` to match the actual measurement
+environment (see Setup), and that PyTorch release does not ship Python 3.10
+wheels -- `pip install` fails with no matching distribution, before any of
+this repo's own code even runs. This is not a bug in the code; it's a Python
+floor PyTorch itself raised. Fixed by narrowing the CI matrix to Python 3.11
+(the documented tested version) and 3.12 (forward-compatibility check). Also
+fixed two stale repo-name references in this README (the CI badge and the
+`git clone` instructions still said `hate-speechclassification` instead of
+the actual repo name, `HatespeechClassification`) left over from before the
+repository was renamed.
+
 ### Remaining known limitation
 
 Beyond the compute-budget limitations already listed in the paper's Section
@@ -164,8 +178,8 @@ energy measurements (Section 7.2); CodeCarbon's estimates are hardware-specific,
 so results on different hardware will differ in magnitude even with identical code.
 
 ```bash
-git clone https://github.com/mihiit/hate-speechclassification.git
-cd hate-speechclassification
+git clone https://github.com/mihiit/HatespeechClassification.git
+cd HatespeechClassification
 
 python3 -m venv venv
 source venv/bin/activate
