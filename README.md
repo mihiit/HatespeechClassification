@@ -63,6 +63,33 @@ KernelSHAP convergence check, and the seed-stability check — was independently
 re-run against this repo's own committed JSON outputs and matched the paper
 exactly.
 
+### Full end-to-end verification (2026-07-18)
+
+Beyond checking committed JSON outputs, the entire pipeline was actually run
+end-to-end against the real public datasets on 2026-07-18: `prep_data.py`
+against a fresh clone of HateXplain reproduced the exact split sizes reported
+in the paper (train=15383, val=1922, test=1924), and `train_logreg.py` /
+`train_bilstm.py` / `train_transformer.py` reproduced the paper's reported
+test accuracies (0.767 / 0.737 / 0.722) and Transformer parameter count
+(832,577) from scratch. `faithfulness_eval.py` and
+`transformer_faithfulness_eval.py` then reproduced Table 1's means exactly.
+This is about as strong a reproducibility confirmation as this repo can offer
+without a second, independent research group re-running it.
+
+Two extensions were added and run for real in the same session, not just
+written:
+
+- **`seed_stability.py`** now covers LIME and SHAP in addition to attention
+  (previously the single highest-priority open question flagged in Section
+  9.4). Genuine result: SHAP is the *least* stable explanation method across
+  retraining (mean pairwise IOU 0.305), less stable than attention (0.356)
+  and LIME (0.381) -- consistent with the higher estimation variance argued
+  for SHAP in Section 6.
+- **`qualitative_example.py`** (new) generates Figure 6: a real HateXplain
+  test post, correctly classified as toxic by all three trained models, with
+  the human rationale and every applicable explanation method for every
+  model shown side by side.
+
 ## Repository structure
 
 ```
@@ -79,7 +106,8 @@ exactly.
 ├── effect_sizes.py                    # Paired Cohen's d for all Table 3 comparisons (Table 3 last column)
 ├── bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs for all Table 3 comparisons (Table 3b)
 ├── shap_convergence.py                # KernelSHAP coalition-budget convergence check, m in {50,100,200,400} (Table showing convergence, Sec. 7.5)
-├── seed_stability.py                  # Attention-explanation stability across 3 random seeds (Table showing stability, Sec. 7.6)
+├── seed_stability.py                  # Attention/LIME/SHAP explanation stability across 3 random seeds (Table 9, Sec. 7.6)
+├── qualitative_example.py             # One real HateXplain post, all models x all applicable explanation methods (Figure 6, Sec. 7.7)
 ├── measure_energy.py                  # CodeCarbon training/inference energy measurement (Table 4)
 ├── scale_sweep_train.py               # Trains BiLSTM at hidden sizes {32,64,128,256} (Table 5 accuracy)
 ├── scale_faithfulness_eval.py         # Attention/LIME faithfulness across the 4 sizes + raw per-post scores (Table 5, Fig. 3)
@@ -163,10 +191,13 @@ python3 davidson_generalization_eval.py   # Zero-shot LogReg/BiLSTM/Transformer 
 # 8. KernelSHAP coalition-budget convergence check (Sec. 7.5)
 python3 shap_convergence.py          # -> shap_convergence_results.json; requires bilstm_h64.pt from step 6
 
-# 9. Explanation stability across random seeds (Sec. 7.6)
+# 9. Explanation stability across random seeds -- attention, LIME, and SHAP (Table 9, Sec. 7.6)
 python3 seed_stability.py            # Trains 2 additional BiLSTM seeds internally; -> seed_stability_results.json
 
-# 10. Generate all figures (300 DPI)
+# 10. Qualitative case study: one real post, all models x all methods (Figure 6, Sec. 7.7)
+python3 qualitative_example.py       # Requires step 3's checkpoints; -> figures/fig6_qualitative_example.png
+
+# 11. Generate remaining figures (300 DPI)
 python3 make_architecture_fig.py     # -> figures/fig1_architecture.png
 python3 make_figures.py              # -> figures/fig2-5_*.png
 ```
@@ -211,6 +242,9 @@ See the paper for full discussion, the theoretical analysis of SHAP faithfulness
 | Faithfulness (IOU/AUPRC) across all nine model-explanation combinations | Measured training/inference CO₂eq (log scale) |
 | ![Scaling](figures/fig3_scaling_trend.png) | ![Generalization](figures/fig5_generalization.png) |
 | Accuracy/faithfulness vs. BiLSTM width | Zero-shot generalization to Davidson et al. |
+
+![Qualitative example](figures/fig6_qualitative_example.png)
+One real HateXplain post, human rationale vs. every applicable explanation method for all three models (Section 7.7)
 
 ## Data
 
