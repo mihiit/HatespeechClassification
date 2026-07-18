@@ -78,11 +78,20 @@ class BiLSTMAttn(nn.Module):
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 HIDDEN_SIZES = [32, 64, 128, 256]
-results = {}
 
+# Load any previously saved results so re-running (e.g. after an interrupted
+# run) doesn't silently drop sizes that were already trained in an earlier
+# invocation -- this used to only save whichever sizes were retrained in the
+# CURRENT run, discarding earlier results for sizes it skipped.
 import os
+if os.path.exists("scale_sweep_results.json"):
+    with open("scale_sweep_results.json") as f:
+        results = {int(k): v for k, v in json.load(f).items()}
+else:
+    results = {}
+
 for hidden_dim in HIDDEN_SIZES:
-    if os.path.exists(f"bilstm_h{hidden_dim}.pt") and hidden_dim != 256:
+    if os.path.exists(f"bilstm_h{hidden_dim}.pt") and hidden_dim in results:
         print(f"hidden_dim={hidden_dim}: already trained, skipping")
         continue
     torch.manual_seed(42)
@@ -115,7 +124,8 @@ for hidden_dim in HIDDEN_SIZES:
     print(f"hidden_dim={hidden_dim}: params={n_params} test_acc={acc:.4f} test_f1={f1:.4f}")
     results[hidden_dim] = {"params": n_params, "acc": acc, "f1": f1}
     torch.save(model.state_dict(), f"bilstm_h{hidden_dim}.pt")
+    with open("scale_sweep_results.json", "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"  (checkpoint + results saved incrementally)")
 
-with open("scale_sweep_results.json", "w") as f:
-    json.dump(results, f, indent=2)
 print("Saved scale_sweep_results.json")

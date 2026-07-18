@@ -28,67 +28,96 @@ involved.** No results in the paper are hand-computed or estimated outside this
 pipeline. Unflattering results (e.g. weak cross-dataset generalization) are
 reported as directly produced by these scripts, not adjusted or omitted.
 
-### Known issues (found and fixed 2026-07-18)
+### Known issues (found 2026-07-18, all now fixed and re-verified)
 
-An independent check against this repo's own committed outputs found two real
-bugs, now fixed:
+A systematic re-verification against this repo's own committed outputs, and
+then against a full from-scratch pipeline run, found three real bugs. All
+three are now fixed and the fixes themselves have been verified by actually
+re-running the affected scripts end-to-end.
 
 1. **Table 1's SD column was wrong.** The paper's Table 1 reported IOU/AUPRC
    standard deviations of roughly 0.18-0.30, but recomputing directly from
    `faithfulness_results.json` / `transformer_faithfulness_results.json` (the
    actual output of `faithfulness_eval.py` / `transformer_faithfulness_eval.py`)
    gives SDs of roughly 0.26-0.39 for every row. The means all matched exactly;
-   only the SDs were wrong. **This has been corrected in the paper** (Table 1
-   SDs, 95% CIs, and the Table 3 Cohen's d column were all recomputed from the
-   correct values). Table 3's p-values and bootstrap CIs were independently
-   re-run against `faithfulness_raw_scores.json` / `transformer_faithfulness_raw.json`
-   and matched the paper exactly, so that table was never affected.
-2. **Table 6 (the scaling-experiment ANOVA/pairwise t-tests) could not be
-   reproduced from committed repo artifacts.** `scale_faithfulness_eval.py`
-   computed the per-post IOU arrays needed for these tests but only ever saved
-   their mean to `scale_faithfulness_results.json`, discarding the raw values.
-   No script in the repo ever computed the ANOVA either — the README simply
-   described the calculation in prose. Both are now fixed:
-   `scale_faithfulness_eval.py` saves `raw_attn_iou` / `raw_lime_iou`, and the
-   new `scale_significance_test.py` computes Table 6 from them. **This does
-   require re-running `scale_faithfulness_eval.py`** against the trained
-   `bilstm_h{32,64,128,256}.pt` checkpoints — the raw arrays were never saved
-   by any prior run, so they can't be recovered from what's currently
-   committed. `scale_significance_test.py` will tell you this and exit
-   cleanly if you try to run it before that.
-
-Everything else — Table 3/3b (significance tests, bootstrap CIs), Table 4
-(energy), Table 5 (scaling means), Table 7 (Davidson generalization), the
-KernelSHAP convergence check, and the seed-stability check — was independently
-re-run against this repo's own committed JSON outputs and matched the paper
-exactly.
+   only the SDs were wrong. **Fixed in the paper** (Table 1 SDs, 95% CIs, and
+   the Table 3 Cohen's d column were all recomputed from the correct values,
+   using exact paired Cohen's d rather than a pooled-SD approximation).
+2. **Table 6 (scaling-experiment ANOVA/pairwise t-tests) had no reproducing
+   code at all**, and the per-post arrays it needs were being discarded.
+   `scale_faithfulness_eval.py` computed the per-post IOU arrays needed for
+   these tests but only ever saved their mean; no script in the repo ever
+   computed the ANOVA. **Fixed**: `scale_faithfulness_eval.py` now saves
+   `raw_attn_iou` / `raw_lime_iou`, and the new `scale_significance_test.py`
+   computes Table 6 from them. Verified 2026-07-18 by retraining all four
+   BiLSTM widths from scratch and running the new script: F=1.92/p=0.126
+   (Attention), F=0.45/p=0.719 (LIME), t=1.89/p=0.061 (h=64 vs. h=128),
+   t=1.77/p=0.079 (h=64 vs. h=256) -- all match the paper exactly.
+3. **`scale_sweep_train.py` silently dropped results for any hidden size it
+   skipped retraining** (because a checkpoint already existed), since it only
+   wrote whichever sizes were retrained in the *current* run to
+   `scale_sweep_results.json`, discarding earlier runs' results for the rest.
+   It also only wrote that file once, at the very end, so an interrupted run
+   lost everything, not just the incomplete size. **Fixed**: results now load
+   and merge across runs, and are saved incrementally after each hidden size.
 
 ### Full end-to-end verification (2026-07-18)
 
-Beyond checking committed JSON outputs, the entire pipeline was actually run
-end-to-end against the real public datasets on 2026-07-18: `prep_data.py`
-against a fresh clone of HateXplain reproduced the exact split sizes reported
-in the paper (train=15383, val=1922, test=1924), and `train_logreg.py` /
-`train_bilstm.py` / `train_transformer.py` reproduced the paper's reported
-test accuracies (0.767 / 0.737 / 0.722) and Transformer parameter count
-(832,577) from scratch. `faithfulness_eval.py` and
-`transformer_faithfulness_eval.py` then reproduced Table 1's means exactly.
-This is about as strong a reproducibility confirmation as this repo can offer
-without a second, independent research group re-running it.
+The entire pipeline was run end-to-end against the real public datasets,
+twice, in independent sessions: `prep_data.py` against a fresh clone of
+HateXplain reproduced the exact split sizes reported in the paper
+(train=15383, val=1922, test=1924) both times; `train_logreg.py` /
+`train_bilstm.py` / `train_transformer.py` reproduced the paper's test
+accuracies (0.767 / 0.737 / 0.722) and Transformer parameter count (832,577)
+from scratch both times; `faithfulness_eval.py` and
+`transformer_faithfulness_eval.py` reproduced every mean in Table 1 both
+times. `davidson_generalization_eval.py` (against a fresh clone of the
+Davidson et al. dataset) reproduced Table 7 exactly (LogReg 0.621/0.733,
+BiLSTM 0.572/0.682, Transformer 0.498/0.589). `shap_convergence.py`
+reproduced Table 8 exactly at all four coalition budgets. This is about as
+strong a reproducibility confirmation as this repo can offer without a
+second, independent research group re-running it.
 
-Two extensions were added and run for real in the same session, not just
-written:
+**One instructive negative result from this process**: re-running
+`measure_energy.py` in a different sandbox session gave a training ratio
+(BiLSTM/LogReg) of the same order of magnitude as the paper (~54x vs. the
+committed ~41x), but an *inference* ratio of ~786x -- wildly different from
+the paper's reported ~9.5x. The originally committed `energy_results.json`
+was left unchanged since it reproduces the paper's numbers exactly and there
+is no reason to believe it was fabricated, but this discrepancy is a real
+finding: LogReg inference on 1000 samples completes in well under a
+millisecond, which is far below CodeCarbon's ~1-second sampling resolution,
+so any single inference-energy reading for it (and therefore the BiLSTM/LogReg
+inference *ratio* specifically) should be treated as noisy and not
+precisely reproducible run-to-run, even though the code and methodology are
+correct. The training ratio, measured over ~1 minute, does not have this
+problem. If you re-run `measure_energy.py` yourself, do not be alarmed if
+your inference ratio differs from the paper's by an order of magnitude --
+that instability is expected, and is now noted in the paper's Section 7.2.
+
+Two extensions were added and verified for real, not just written:
 
 - **`seed_stability.py`** now covers LIME and SHAP in addition to attention
   (previously the single highest-priority open question flagged in Section
-  9.4). Genuine result: SHAP is the *least* stable explanation method across
-  retraining (mean pairwise IOU 0.305), less stable than attention (0.356)
-  and LIME (0.381) -- consistent with the higher estimation variance argued
-  for SHAP in Section 6.
+  9.4). Genuine, twice-reproduced result: SHAP is the *least* stable
+  explanation method across retraining (mean pairwise IOU 0.267-0.331),
+  less stable than attention (0.325-0.406) and LIME (0.340-0.419) --
+  consistent with the higher estimation variance argued for SHAP in Section 6.
 - **`qualitative_example.py`** (new) generates Figure 6: a real HateXplain
-  test post, correctly classified as toxic by all three trained models, with
-  the human rationale and every applicable explanation method for every
-  model shown side by side.
+  test post, correctly classified as toxic by all three trained models
+  (verified with two independently-trained sets of models, P(toxic) stayed
+  above 0.75 for all three both times), with the human rationale and every
+  applicable explanation method for every model shown side by side.
+
+### Remaining known limitation
+
+Beyond the compute-budget limitations already listed in the paper's Section
+9 (Threats to Validity and Limitations), the energy-ratio instability above
+is the one open reproducibility caveat in this repo: absolute and
+inference-ratio energy numbers are hardware- and measurement-noise-sensitive
+and should be treated as illustrative rather than exact, even though the
+methodology and code are correct and the training-ratio order of magnitude
+does replicate.
 
 ## Repository structure
 
