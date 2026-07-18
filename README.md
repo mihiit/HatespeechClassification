@@ -109,6 +109,22 @@ Two extensions were added and verified for real, not just written:
   above 0.75 for all three both times), with the human rationale and every
   applicable explanation method for every model shown side by side.
 
+### Reviewer-simulation fixes (2026-07-19)
+
+A self-critique pass (reading the paper as a skeptical reviewer would) surfaced
+one more real gap: Table 2's Transformer latency had never been measured and
+was left blank ("--"), and the existing LogReg/BiLSTM latency numbers came
+from an earlier, undocumented measurement protocol that couldn't be re-run
+identically. Added `measure_latency.py`, which measures single-sample CPU
+inference latency for all three models under one identical protocol (batch
+size 1, 20-sample warmup, 500-sample mean), and re-measured all three so
+Table 2 is now fully populated with directly comparable numbers. The paper's
+Table 2 caption was updated accordingly. Several other reviewer-simulation
+findings (faithfulness-vs-plausibility terminology, the SHAP-exactness
+confound, multiple-comparisons correction, single-seed caveat on the main
+comparison) were text-only fixes made directly in the paper rather than the
+code, so they aren't reflected here.
+
 ### CI fix (2026-07-19)
 
 The first CI run after pushing to GitHub failed on the Python 3.10 job. Cause:
@@ -142,6 +158,7 @@ does replicate.
 ├── train_logreg.py                    # Trains TF-IDF + Logistic Regression baseline
 ├── train_bilstm.py                    # Trains BiLSTM (h=64) with additive attention
 ├── train_transformer.py               # Trains a 2-layer Transformer encoder from scratch
+├── measure_latency.py                 # Single-sample CPU inference latency, all 3 models measured identically (Table 2)
 ├── faithfulness_eval.py               # Attention/LIME/SHAP faithfulness for LogReg + BiLSTM (Table 1 rows 1-5)
 ├── transformer_faithfulness_eval.py   # CLS-Attention/LIME/SHAP faithfulness for Transformer (Table 1 rows 6-8)
 ├── significance_test.py               # Paired t-tests, LogReg vs BiLSTM (Table 3 rows 1-2)
@@ -207,6 +224,7 @@ python3 prep_data.py                 # -> splits.json (train=15383 val=1922 test
 python3 train_logreg.py              # -> logreg_model.pkl (test acc~0.767)
 python3 train_bilstm.py              # -> bilstm_model.pt, vocab.pkl (test acc~0.737, saved as h=64)
 python3 train_transformer.py         # -> transformer_model.pt, transformer_vocab.pkl (test acc~0.722)
+python3 measure_latency.py           # -> latency_results.json (Table 2, all 3 models measured identically)
 
 # 3. Faithfulness evaluation (Table 1, Figure 2)
 python3 faithfulness_eval.py             # LogReg + BiLSTM: attention/LIME/SHAP vs. human rationales
