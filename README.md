@@ -1,8 +1,11 @@
-# Faithfulness Under Efficiency: Attention, LIME, and SHAP Across Three Model Families for Hate-Speech Classification
+# The Faithfulness Paradox: When a Simple Classifier Out-Explains Neural Networks in Hate Speech Detection
 
-Code accompanying the paper *"Faithfulness Under Efficiency: A Rationale-Grounded
-Comparison of Attention, LIME, and SHAP Across Three Model Families for Hate-Speech
-Classification,"* submitted to AI4S 2026.
+[![CI](https://github.com/mihiit/hate-speechclassification/actions/workflows/ci.yml/badge.svg)](https://github.com/mihiit/hate-speechclassification/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
+Code accompanying the paper *"The Faithfulness Paradox: When a Simple Classifier
+Out-Explains Neural Networks in Hate Speech Detection,"* submitted to AI4S 2026.
 
 We compare three model families — TF-IDF + Logistic Regression, a BiLSTM with
 additive attention, and a small Transformer encoder, all trained **from scratch**
@@ -29,6 +32,7 @@ reported as directly produced by these scripts, not adjusted or omitted.
 
 ```
 .
+├── .github/workflows/ci.yml           # CI: compile/import checks + JSON validation on every push
 ├── prep_data.py                       # Builds train/val/test splits + rationale masks
 ├── train_logreg.py                    # Trains TF-IDF + Logistic Regression baseline
 ├── train_bilstm.py                    # Trains BiLSTM (h=64) with additive attention
@@ -154,6 +158,15 @@ plainly rather than downplayed.
 
 See the paper for full discussion, the theoretical analysis of SHAP faithfulness
 (Section 6), and a complete list of limitations (Section 9).
+
+## Key figures
+
+| | |
+|---|---|
+| ![Main results](figures/fig2_main_results.png) | ![Energy](figures/fig4_energy.png) |
+| Faithfulness (IOU/AUPRC) across all nine model-explanation combinations | Measured training/inference CO₂eq (log scale) |
+| ![Scaling](figures/fig3_scaling_trend.png) | ![Generalization](figures/fig5_generalization.png) |
+| Accuracy/faithfulness vs. BiLSTM width | Zero-shot generalization to Davidson et al. |
 
 ## Data
 
