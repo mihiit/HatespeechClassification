@@ -100,6 +100,12 @@ exactly.
 
 ## Setup
 
+Tested with Python 3.11 on Windows 11 (13th Gen Intel Core i7-1360P, 16 GB RAM,
+CPU-only -- no GPU used for training or inference). `requirements.txt` pins the
+exact `torch`, `scikit-learn`, and `codecarbon` versions used for the reported
+energy measurements (Section 7.2); CodeCarbon's estimates are hardware-specific,
+so results on different hardware will differ in magnitude even with identical code.
+
 ```bash
 git clone https://github.com/mihiit/hate-speechclassification.git
 cd hate-speechclassification
