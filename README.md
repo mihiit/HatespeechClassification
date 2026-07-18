@@ -79,7 +79,7 @@ so results on different hardware will differ in magnitude even with identical co
 git clone https://github.com/mihiit/HatespeechClassification.git
 cd HatespeechClassification
 
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
@@ -99,49 +99,49 @@ Run in this order — later steps consume earlier steps' outputs:
 
 ```bash
 # 1. Build splits + rationale masks
-python3 prep_data.py                 # -> splits.json (train=15383 val=1922 test=1924)
+python prep_data.py                 # -> splits.json (train=15383 val=1922 test=1924)
 
 # 2. Train the three model families
-python3 train_logreg.py              # -> logreg_model.pkl (test acc~0.767)
-python3 train_bilstm.py              # -> bilstm_model.pt, vocab.pkl (test acc~0.737, saved as h=64)
-python3 train_transformer.py         # -> transformer_model.pt, transformer_vocab.pkl (test acc~0.722)
-python3 measure_latency.py           # -> latency_results.json (Table 2, all 3 models measured identically)
+python train_logreg.py              # -> logreg_model.pkl (test acc~0.767)
+python train_bilstm.py              # -> bilstm_model.pt, vocab.pkl (test acc~0.737, saved as h=64)
+python train_transformer.py         # -> transformer_model.pt, transformer_vocab.pkl (test acc~0.722)
+python measure_latency.py           # -> latency_results.json (Table 2, all 3 models measured identically)
 
 # 3. Faithfulness evaluation (Table 1, Figure 2)
-python3 faithfulness_eval.py             # LogReg + BiLSTM: attention/LIME/SHAP vs. human rationales
-python3 transformer_faithfulness_eval.py # Transformer: CLS-attention/LIME/SHAP vs. human rationales
+python faithfulness_eval.py             # LogReg + BiLSTM: attention/LIME/SHAP vs. human rationales
+python transformer_faithfulness_eval.py # Transformer: CLS-attention/LIME/SHAP vs. human rationales
 
 # 4. Significance testing (Table 3)
-python3 significance_test.py               # Paired t-tests, LogReg vs BiLSTM (LIME, SHAP)
-python3 significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (all Table 3 rows)
-python3 effect_sizes.py                    # Paired Cohen's d for all Table 3 comparisons -> effect_sizes_results.json
-python3 bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs (Table 3b), corroborates t-tests
+python significance_test.py               # Paired t-tests, LogReg vs BiLSTM (LIME, SHAP)
+python significance_test_transformer.py   # Paired t-tests, LogReg/BiLSTM vs Transformer (all Table 3 rows)
+python effect_sizes.py                    # Paired Cohen's d for all Table 3 comparisons -> effect_sizes_results.json
+python bootstrap_ci.py                    # 10,000-resample bootstrap 95% CIs (Table 3b), corroborates t-tests
 
 # 5. Energy measurement (Table 4, Figure 4)
-python3 measure_energy.py            # CodeCarbon: real training/inference CO2eq for LogReg + BiLSTM
+python measure_energy.py            # CodeCarbon: real training/inference CO2eq for LogReg + BiLSTM
 
 # 6. Scaling experiment + significance (Table 5/6, Figure 3)
-python3 scale_sweep_train.py         # Trains BiLSTM at h in {32,64,128,256}
-python3 scale_faithfulness_eval.py   # Attention/LIME faithfulness per size + raw per-post scores
-python3 scale_significance_test.py   # ANOVA / pairwise t-tests (Table 6), reads raw_attn_iou/raw_lime_iou
+python scale_sweep_train.py         # Trains BiLSTM at h in {32,64,128,256}
+python scale_faithfulness_eval.py   # Attention/LIME faithfulness per size + raw per-post scores
+python scale_significance_test.py   # ANOVA / pairwise t-tests (Table 6), reads raw_attn_iou/raw_lime_iou
 #   from scale_faithfulness_results.json saved by the step above.
 
 # 7. Cross-dataset generalization check (Table 7, Figure 5)
-python3 davidson_generalization_eval.py   # Zero-shot LogReg/BiLSTM/Transformer on Davidson et al.
+python davidson_generalization_eval.py   # Zero-shot LogReg/BiLSTM/Transformer on Davidson et al.
 #   Requires bilstm_h64.pt from step 6 above (see comment at top of this script)
 
 # 8. KernelSHAP coalition-budget convergence check (Sec. 7.5)
-python3 shap_convergence.py          # -> shap_convergence_results.json; requires bilstm_h64.pt from step 6
+python shap_convergence.py          # -> shap_convergence_results.json; requires bilstm_h64.pt from step 6
 
 # 9. Explanation stability across random seeds -- attention, LIME, and SHAP (Table 9, Sec. 7.6)
-python3 seed_stability.py            # Trains 2 additional BiLSTM seeds internally; -> seed_stability_results.json
+python seed_stability.py            # Trains 2 additional BiLSTM seeds internally; -> seed_stability_results.json
 
 # 10. Qualitative case study: one real post, all models x all methods (Figure 6, Sec. 7.7)
-python3 qualitative_example.py       # Requires step 3's checkpoints; -> figures/fig6_qualitative_example.png
+python qualitative_example.py       # Requires step 3's checkpoints; -> figures/fig6_qualitative_example.png
 
 # 11. Generate remaining figures (300 DPI)
-python3 make_architecture_fig.py     # -> figures/fig1_architecture.png
-python3 make_figures.py              # -> figures/fig2-5_*.png
+python make_architecture_fig.py     # -> figures/fig1_architecture.png
+python make_figures.py              # -> figures/fig2-5_*.png
 ```
 
 ## Key results
